@@ -5,13 +5,11 @@ import Message from './Message.jsx';
 import { getBotReplyWithFallback } from './Response.js';
 
 export default function App() {
-  const [chatMessages, setChatMessages] = useState([
-    { message: "Hi 👋 — ask me anything!", sender: "bot" },
-  ]);
+  const [chatMessages, setChatMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll to bottom when new messages are added
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
@@ -19,32 +17,29 @@ export default function App() {
   async function handleSendMessage(userText) {
     if (!userText.trim()) return;
 
-    // Add user message immediately
+    // Remove welcome once the user starts
+    if (!hasStarted) setHasStarted(true);
+
     const userMessage = { message: userText, sender: "user" };
     setChatMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
     try {
-      // Get bot reply with fallback handling
       const reply = await getBotReplyWithFallback(userText);
-      
-      // Add bot response
       setChatMessages(prev => [...prev, { message: reply, sender: "bot" }]);
-      
     } catch (err) {
       console.error('Error getting bot reply:', err);
-      
-      // More specific error messages
+
       let errorMessage = "⚠️ Sorry, I couldn't fetch a reply.";
-      
+
       if (err.message.includes('API key')) {
-        errorMessage = "🔑 API key configuration issue. Please check your settings.";
-      } else if (err.message.includes('loading')) {
-        errorMessage = "⏳ AI model is loading. Please try again in a moment.";
-      } else if (err.message.includes('network') || err.message.includes('fetch')) {
-        errorMessage = "🌐 Network error. Please check your connection and try again.";
+        errorMessage = "🔑 API key issue. Please check your Groq API key.";
+      } else if (err.message.includes('rate limit')) {
+        errorMessage = "⏳ Too many requests. Please try again in a moment.";
+      } else if (err.message.includes('network')) {
+        errorMessage = "🌐 Network error. Please check your connection.";
       }
-      
+
       setChatMessages(prev => [
         ...prev,
         { message: errorMessage, sender: "bot" },
@@ -55,28 +50,36 @@ export default function App() {
   }
 
   return (
-    <div className="chat-container">
-      <div className="messages">
-        {chatMessages.map((msg, i) => (
-          <Message key={i} message={msg.message} sender={msg.sender} />
-        ))}
-        
-        {isLoading && (
-          <div className="message bot">
-            <div className="typing-indicator">
-              <div className="typing-dots">
-                <div className="typing-dot"></div>
-                <div className="typing-dot"></div>
-                <div className="typing-dot"></div>
+    <>
+      <div className="chat-container">
+        <div className="messages">
+          {!hasStarted && (
+            <div className="welcome-message">
+              <p>👋 Hello! Ask me anything to get started.</p>
+            </div>
+          )}
+
+          {chatMessages.map((msg, i) => (
+            <Message key={i} message={msg.message} sender={msg.sender} />
+          ))}
+
+          {isLoading && (
+            <div className="message bot">
+              <div className="typing-indicator">
+                <div className="typing-dots">
+                  <div className="typing-dot"></div>
+                  <div className="typing-dot"></div>
+                  <div className="typing-dot"></div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} />
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       <Header onSend={handleSendMessage} isLoading={isLoading} />
-    </div>
+    </>
   );
 }
