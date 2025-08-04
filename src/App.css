@@ -85,7 +85,7 @@ body {
 
 .message.bot {
   background: var(--white-transparent);
-  color: #374151;
+  color: #333f52;
   align-self: flex-start;
   box-shadow: var(--shadow-light);
   margin-top: 10px;

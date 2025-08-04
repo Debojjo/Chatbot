@@ -52,8 +52,8 @@ export default function App() {
         <div className="messages">
           {!hasStartedChat && (
             <div className="message welcome-message">
-              <img src="./public/bot.svg" width="20px" alt="Bot" />
-              <span>Hello! I’m your AI assistant 🤖<br />How can I help you today?</span>
+              <img src="./robo.svg" width="20px" alt="Bot" />
+              <span>Hello! I’m your AI assistant <br />How can I help you today?</span>
             </div>
           )}
 
